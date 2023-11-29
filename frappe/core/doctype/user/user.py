@@ -355,10 +355,10 @@ class User(Document):
 						)
 
 					if not self.flags.no_welcome_mail and cint(self.send_welcome_email):
-						self.send_welcome_mail_to_user()
+						link = self.send_welcome_mail_to_user()
 						self.flags.email_sent = 1
 						if frappe.session.user != "Guest":
-							msgprint(_("Welcome email sent"))
+							msgprint(_("Welcome email sent: {0}").format(link))
 						return
 			else:
 				self.email_new_password(new_password)
@@ -448,6 +448,7 @@ class User(Document):
 			),
 			custom_template=welcome_email_template,
 		)
+		return link
 
 	def send_login_mail(self, subject, template, add_args, now=None, custom_template=None):
 		"""send mail with login details"""
