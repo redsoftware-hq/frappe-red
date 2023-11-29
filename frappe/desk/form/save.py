@@ -44,6 +44,25 @@ def savedocs(doc, action):
 
 	add_data_to_monitor(doctype=doc.doctype, action=action)
 	frappe.msgprint(frappe._("Saved"), indicator="green", alert=True)
+	
+	if action == "Save" and doc.doctype == "User Permission" and doc.allow == "Project":
+        user = frappe.get_doc("User", doc.user)
+        flagModule = False
+        for i in user.block_modules:
+            if i.module == "Projects":
+                flagModule = i
+                break
+        flagRole = False
+        for i in user.roles:
+            if i.role == "Projects User":
+                flagRole = True
+                break
+        if not flagRole:
+            user.append("roles", {"role": "Projects User"})
+            user.save()
+        if flagModule:
+            user.block_modules.remove(flagModule)
+            user.save()
 
 
 @frappe.whitelist()

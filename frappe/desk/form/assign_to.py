@@ -131,6 +131,39 @@ def add(args=None, *, ignore_permissions=False):
 		user_list = format_message_for_assign_to(users_with_duplicate_todo)
 		frappe.msgprint(_("Already in the following Users ToDo list:{0}").format(user_list, alert=True))
 
+	if args.get("doctype") == "Task":
+        task = frappe.get_doc("Task", args["name"])
+        if task.project:
+            for assign_to in frappe.parse_json(args.get("assign_to")):
+                permission = frappe.get_all(
+                    "User Permission",
+                    fields=["user"],
+                    filters={
+                        "user": assign_to,
+                        "allow": "Project",
+                        "for_value": task.project,
+                    },
+                )
+                if not permission:
+                    frappe.permissions.add_user_permission("Project",task.project, assign_to)
+                    user = frappe.get_doc("User", assign_to)
+                    flagModule = False
+                    for i in user.block_modules:
+                        if i.module == "Projects":
+                            flagModule = i
+                            break
+                    flagRole = False
+                    for i in user.roles:
+                        if i.role == "Projects User":
+                            flagRole = True
+                            break
+                    if not flagRole:
+                        user.append("roles", {"role": "Projects User"})
+                        user.save()
+                    if flagModule:
+                        user.block_modules.remove(flagModule)
+                        user.save()
+
 	return get(args)
 
 
